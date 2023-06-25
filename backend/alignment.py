@@ -4,11 +4,15 @@ import click
 from click_option_group import optgroup
 import random
 import tempfile
+import marisa_trie
 from pathlib import Path
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from .common import set_threads, CONTEXT_SETTINGS, BaseNameType
+from backend.common import set_threads, CONTEXT_SETTINGS, BaseNameType
+from backend.taxonparse import get_lineage
+
+# resolve the task that assign reads to taxids
 
 
 def parse_paf(paf=None, line=None):
@@ -62,6 +66,35 @@ def parse_paf(paf=None, line=None):
         raise ValueError("Either paf or line must be provided.")
 
 
+def call_hits(paf=None, accession2taxid_db=None, taxdump_dir=None):
+    """
+    Assign reads to taxon
+    """
+    trie = marisa_trie.RecordTrie("L").mmap(accession2taxid_db)
+    taxids = set()
+    hit_dct = {}
+    for aln_rec in parse_paf(paf=paf):
+        if aln_rec["tp"] != "P" or aln_rec["alnlen"] < aln_rec["qlen"] * 0.9:
+            continue
+
+        read_id = aln_rec["qname"]
+        sample_id = read_id.split(".")[0]
+        hit_dct.setdefault(sample_id, {})
+        accession = aln_rec["tname"].split(".")[0]
+        taxid = trie[accession][0][0]
+        taxids.add(taxid)
+        hit_dct[sample_id].setdefault(read_id, {})
+        hit_dct[sample_id][read_id]["alignment"] = aln_rec
+        hit_dct[sample_id][read_id]["taxon"] = {"taxid": taxid}
+
+    lineage_dct = get_lineage(taxids=taxids, taxdump_dir=taxdump_dir)
+    for sample_id, reads_dct in hit_dct.items():
+        for read_id, read_dct in reads_dct.items():
+            taxid = read_dct["taxon"]["taxid"]
+            read_dct["taxon"]["lineage"] = lineage_dct[str(taxid)]
+    return hit_dct
+
+
 @set_threads
 def aln_with_minimap2(
     queries,
@@ -112,7 +145,7 @@ def aln_with_minimap2(
 
     with tempfile.TemporaryDirectory(prefix="mm2_", dir=work_dir) as tmp_dir:
         mm2_cmd.extend(["--split-prefix", f"{tmp_dir}/mm2"])
-        out = f"{work_dir}/mm2.paf"
+        out_paf = f"{work_dir}/mm2.paf"
         mm2_cmd.extend(["-o", out])
         mm2_cmd.append(target)
         if isinstance(queries, list):
@@ -124,7 +157,7 @@ def aln_with_minimap2(
         if mm2_proc.returncode != 0:
             raise subprocess.CalledProcessError(mm2_proc.returncode, mm2_proc.args)
 
-    return out
+    return out_paf
 
 
 def select_best_alignment(alignments=[], paf=None):
