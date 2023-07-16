@@ -23,4 +23,4 @@ share/python-wheels/
 MANIFEST
 test
 notebook
-
+.nextflow

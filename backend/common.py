@@ -54,8 +54,11 @@ def open_gz(file, mode=None):
     GZIP_MAGIC_NUMBER = b"\x1f\x8b"
 
     def _is_gz_file():
-        with open(file, "rb") as f:
-            return f.read(2) == GZIP_MAGIC_NUMBER
+        if mode is None or "r" in mode:
+            with open(file, "rb") as f:
+                return f.read(2) == GZIP_MAGIC_NUMBER
+        else:
+            True
 
     mode = mode if mode else "rt"
     if _is_gz_file():
@@ -119,7 +122,8 @@ class AdvancedJSONEncoder(json.JSONEncoder):
         elif isinstance(obj, Path):
             return str(obj.resolve())
         return json.JSONEncoder.default(self, obj)
-    
+
+
 class BaseNameType(click.ParamType):
     name = "basename"
 

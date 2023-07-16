@@ -12,9 +12,9 @@ from backend.abundance import get_rpm
 
 @click.command(help="Relative abundance calculation", context_settings=CONTEXT_SETTINGS)
 @click.option(
-    "--taxon-json",
-    "-i",
-    help="input taxonomy classification json",
+    "--taxon_json",
+    "-t",
+    help="input taxon json",
     type=click.Path(exists=True, dir_okay=False, resolve_path=True, path_type=Path),
     required=True,
 )
@@ -27,11 +27,9 @@ from backend.abundance import get_rpm
 )
 @set_out_dir
 def main(taxon_json, out_dir):
-    hits_dct = json.loads(taxon_json.read_text())
-    read2taxon_dct = dict(
-        [(read, hit_dct["taxon"]) for read, hit_dct in hits_dct.items()]
-    )
-    rpm_dct = get_rpm(read2taxon_dct)
+    read2taxon = json.loads(taxon_json.read_text())
+
+    rpm_dct = get_rpm(read2taxon)
     sample_id = taxon_json.name.split(".")[0]
     out_json = out_dir / f"{sample_id}.rpm.json"
     out_json.write_text(json.dumps(rpm_dct, indent=2))

@@ -4,7 +4,7 @@ import tempfile
 import subprocess
 from pathlib import Path
 
-from common import (
+from backend.common import (
     set_threads,
     set_out_dir,
     get_basename,
@@ -53,7 +53,7 @@ def qc_filter(fastq_1, fastq_2=None, threads=0, out_dir=None):
         qc_cmd.extend(["-I", fastq_2, "-O", out_dir / f"{fastq_2_basename}.qc.fq"])
     qc_proc = subprocess.run(qc_cmd)
     if qc_proc.returncode:
-        raise Exception("Failed to run fastp")
+        raise Exception("Failed to run fastp\nCMD: " + " ".join(qc_cmd))
     return {
         "fastq_1": out_dir / f"{fastq_1_basename}.qc.fq",
         "fastq_2": out_dir / f"{fastq_2_basename}qc.fq"

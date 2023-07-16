@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-
-import os
+import json
 import subprocess
 
 
@@ -57,3 +56,46 @@ def get_lineage(taxids, taxdump_dir):
         else:
             lineage_dct[row[0]] = []
     return lineage_dct
+
+
+def list_subtree(taxids, taxdump_dir):
+    """
+    list all taxids in subtree
+    taxids: list of taxids -> list
+    taxdump_dir: path to taxdump directory -> Path
+    """
+    taxids = set([str(taxid) for taxid in taxids])
+    list_cmd = [
+        "taxonkit",
+        "list",
+        "--data-dir",
+        taxdump_dir,
+        "--ids",
+        ",".join(taxids),
+        "-j",
+        "4",
+    ]
+    list_proc = subprocess.Popen(list_cmd, stdout=subprocess.PIPE)
+    sub_taxids = set()
+    for row in list_proc.stdout:
+        row = row.decode("utf-8").strip()
+        if row:
+            sub_taxids.add(row)
+    return sub_taxids
+
+
+def assign_taxon(hit_json, taxdump_dir):
+    taxids = set()
+    hits = json.loads(hit_json.read_text())
+    qname2lineage = {}
+    for hit in hits:
+        qname = hit["qname"]
+        acc, taxid = hit["tname"].split("|")
+        taxids.add(taxid)
+        qname2lineage[qname] = {"taxid": taxid, "lineage": None}
+
+    taxid2lineage = get_lineage(taxids, taxdump_dir)
+    for qname in list(qname2lineage.keys()):
+        taxid = qname2lineage[qname]["taxid"]
+        qname2lineage[qname]["lineage"] = taxid2lineage.get(taxid)
+    return qname2lineage

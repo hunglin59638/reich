@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 import json
 import click
-from click_option_group import optgroup
+from click_option_group import optgroup, GroupedOption
 import random
 import tempfile
-import marisa_trie
 from pathlib import Path
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from backend.common import set_threads, CONTEXT_SETTINGS, BaseNameType
 from backend.taxonparse import get_lineage
-
-# resolve the task that assign reads to taxids
 
 
 def parse_paf(paf=None, line=None):
@@ -66,35 +63,6 @@ def parse_paf(paf=None, line=None):
         raise ValueError("Either paf or line must be provided.")
 
 
-def call_hits(paf=None, accession2taxid_db=None, taxdump_dir=None):
-    """
-    Assign reads to taxon
-    """
-    trie = marisa_trie.RecordTrie("L").mmap(accession2taxid_db)
-    taxids = set()
-    hit_dct = {}
-    for aln_rec in parse_paf(paf=paf):
-        if aln_rec["tp"] != "P" or aln_rec["alnlen"] < aln_rec["qlen"] * 0.9:
-            continue
-
-        read_id = aln_rec["qname"]
-        sample_id = read_id.split(".")[0]
-        hit_dct.setdefault(sample_id, {})
-        accession = aln_rec["tname"].split(".")[0]
-        taxid = trie[accession][0][0]
-        taxids.add(taxid)
-        hit_dct[sample_id].setdefault(read_id, {})
-        hit_dct[sample_id][read_id]["alignment"] = aln_rec
-        hit_dct[sample_id][read_id]["taxon"] = {"taxid": taxid}
-
-    lineage_dct = get_lineage(taxids=taxids, taxdump_dir=taxdump_dir)
-    for sample_id, reads_dct in hit_dct.items():
-        for read_id, read_dct in reads_dct.items():
-            taxid = read_dct["taxon"]["taxid"]
-            read_dct["taxon"]["lineage"] = lineage_dct[str(taxid)]
-    return hit_dct
-
-
 @set_threads
 def aln_with_minimap2(
     queries,
@@ -146,9 +114,9 @@ def aln_with_minimap2(
     with tempfile.TemporaryDirectory(prefix="mm2_", dir=work_dir) as tmp_dir:
         mm2_cmd.extend(["--split-prefix", f"{tmp_dir}/mm2"])
         out_paf = f"{work_dir}/mm2.paf"
-        mm2_cmd.extend(["-o", out])
+        mm2_cmd.extend(["-o", out_paf])
         mm2_cmd.append(target)
-        if isinstance(queries, list):
+        if isinstance(queries, (list, tuple)):
             mm2_cmd.extend(queries)
         else:
             mm2_cmd.append(queries)
@@ -160,8 +128,36 @@ def aln_with_minimap2(
     return out_paf
 
 
-def select_best_alignment(alignments=[], paf=None):
+def call_hits(paf=None, taxdump_dir=None):
     """
+    Assign reads to taxon
+    """
+    # taxids = set()
+    sample2hits = {}
+    for aln_rec in parse_paf(paf=paf):
+        if aln_rec["tp"] != "P" or aln_rec["alnlen"] < aln_rec["qlen"] * 0.9:
+            continue
+
+        read_id = aln_rec["qname"]
+        sample_id = read_id.split(".")[0]
+        sample2hits.setdefault(sample_id, [])
+        sample2hits[sample_id].append(aln_rec)
+        # accession, taxid = aln_rec["tname"].split("|")
+        # taxids.add(taxid)
+        # sample2hits[sample_id].setdefault(read_id, {})
+        # sample2hits[sample_id][read_id]["alignment"] = aln_rec
+        # sample2hits[sample_id][read_id]["taxon"] = {"taxid": taxid}
+
+    # taxid2lineage = get_lineage(taxids=taxids, taxdump_dir=taxdump_dir)
+    # for sample_id, hits in sample2hits.items():
+    #     for read_id, read_dct in hits.items():
+    #         taxid = read_dct["taxon"]["taxid"]
+    #         read_dct["taxon"]["lineage"] = taxid2lineage[str(taxid)]
+    return sample2hits
+
+
+def select_best_alignment(alignments=[], paf=None):
+    """(Deprecated)
     Select the best alignment from a list of alignments.
     iter_alignments: list of alignments -> list
     return: best alignment -> dict
@@ -183,7 +179,7 @@ def select_best_alignment(alignments=[], paf=None):
 
 
 def reassign_alignments(best_dct):
-    """
+    """(Deprecated)
     Reassign alignments to the best reference.
     best_dct: dictionary of best alignments -> dict
     return: dictionary of re-assigned alignments -> dict
@@ -216,6 +212,7 @@ def reassign_alignments(best_dct):
 def main(queries, reference, out_dir, threads, read_type, paf=None):
     preset = None if read_type == "illumina" else "map-ont"
     out_dir.mkdir(parents=True, exist_ok=True)
+
     paf = (
         aln_with_minimap2(
             target=reference,
@@ -227,12 +224,63 @@ def main(queries, reference, out_dir, threads, read_type, paf=None):
         if paf is None
         else paf
     )
-    best_aln_dct = select_best_alignment(paf=paf)
-    reassign_dct = reassign_alignments(best_aln_dct)
-    aln_json = out_dir / "alignment.json"
+    sample2hits = call_hits(paf=paf)
+    # best_aln_dct = select_best_alignment(paf=paf)
+    # reassign_dct = reassign_alignments(best_aln_dct)
 
-    aln_json.write_text(json.dumps(reassign_dct, indent=4))
-    return aln_json
+    # out_dct = {}
+    # for read_id, read_dct in reassign_dct.items():
+    #     sample_id = read_id.split(".")[0]
+    #     out_dct.setdefault(sample_id, {})
+    #     out_dct[sample_id][read_id] = read_dct
+
+    hit_jsons = []
+    for sample_id, hits in sample2hits.items():
+        hit_json = out_dir / f"{sample_id}.hit.json"
+        hit_json.write_text(json.dumps(hits, indent=4))
+    return hit_jsons
+
+
+class OptionEatAll(GroupedOption):
+    def __init__(self, *args, **kwargs):
+        self.save_other_options = kwargs.pop("save_other_options", True)
+        nargs = kwargs.pop("nargs", -1)
+        assert nargs == -1, "nargs, if set, must be -1 not {}".format(nargs)
+        super(OptionEatAll, self).__init__(*args, **kwargs)
+        self._previous_parser_process = None
+        self._eat_all_parser = None
+
+    def add_to_parser(self, parser, ctx):
+        def parser_process(value, state):
+            # method to hook to the parser.process
+            done = False
+            value = [value]
+            if self.save_other_options:
+                # grab everything up to the next option
+                while state.rargs and not done:
+                    for prefix in self._eat_all_parser.prefixes:
+                        if state.rargs[0].startswith(prefix):
+                            done = True
+                    if not done:
+                        value.append(state.rargs.pop(0))
+            else:
+                # grab everything remaining
+                value += state.rargs
+                state.rargs[:] = []
+            value = tuple(value)
+
+            # call the actual process
+            self._previous_parser_process(value, state)
+
+        retval = super(OptionEatAll, self).add_to_parser(parser, ctx)
+        for name in self.opts:
+            our_parser = parser._long_opt.get(name) or parser._short_opt.get(name)
+            if our_parser:
+                self._eat_all_parser = our_parser
+                self._previous_parser_process = our_parser.process
+                our_parser.process = parser_process
+                break
+        return retval
 
 
 @click.command(
@@ -242,15 +290,16 @@ def main(queries, reference, out_dir, threads, read_type, paf=None):
 @optgroup.option(
     "--queries",
     "-q",
-    nargs="+",
+    nargs=-1,
+    cls=OptionEatAll,
     help="reads (multiple files allowed)",
-    type=click.Path(exists=True, dir_okay=False, resolve_path=True, path_type=Path),
+    type=tuple,
 )
 @optgroup.option(
     "--reference",
     "-r",
     help="reference genomes",
-    type=BaseNameType(),
+    type=click.Path(exists=True, dir_okay=False, resolve_path=True, path_type=Path),
 )
 @optgroup.option(
     "--paf",
@@ -290,7 +339,7 @@ def cli(queries, reference, paf, out_dir, threads, read_type):
     if queries is None and reference is None and paf is None:
         raise ValueError("reference and queries must be provided.")
 
-    aln_json = main(
+    hit_jsons = main(
         queries=queries,
         reference=reference,
         paf=paf,
@@ -298,4 +347,5 @@ def cli(queries, reference, paf, out_dir, threads, read_type):
         threads=threads,
         read_type=read_type,
     )
-    click.echo(f"Alignment json written to {aln_json}")
+    for hit_json in hit_jsons:
+        click.echo(f"hit json written to {hit_json}")
