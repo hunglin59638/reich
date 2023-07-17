@@ -1,0 +1,15 @@
+name: reich-fronted
+channels:
+  - conda-forge
+  - r
+dependencies:
+  - r-base
+  - r-shiny
+  - r-shinythemes
+  - r-dt
+  - r-tidyverse
+  - r-dplyr
+  - r-diagrammer
+  - r-jsonlite
+  - jupyter
+  - r-irkernel
