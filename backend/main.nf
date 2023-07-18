@@ -26,14 +26,15 @@ process echo_files {
         echo $reads > reads.txt
         """
 }
-include { validate_reads } from "./modules/validate.nf"
-include { host_filter; subsample_reads } from "./modules/host_filter.nf"
-include { pathogen_alignment; assign_taxon } from "./modules/pathogen_alignment.nf"
-include { abundance_calculation } from "./modules/abundance_calculation.nf"
-include { summary_report } from "./modules/summary_report.nf"  
+include { validate_reads } from "./workflows/modules/validate.nf"
+include { host_filter; subsample_reads } from "./workflows/modules/host_filter.nf"
+include { pathogen_alignment; assign_taxon } from "./workflows/modules/pathogen_alignment.nf"
+include { abundance_calculation } from "./workflows/modules/abundance_calculation.nf"
+include { summary_report } from "./workflows/modules/summary_report.nf"  
 
 script_dir = file("$workflow.projectDir").getParent() 
-println "Project : $script_dir"
+println "Project : $workflow.projectDir"
+println "scripts: $workflow.projectDir/scripts"
 println "reads: $params.reads"
 println "output: $params.out_dir"
 println "threads: $params.threads"

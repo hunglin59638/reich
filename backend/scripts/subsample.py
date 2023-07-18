@@ -4,8 +4,8 @@ from pathlib import Path
 import subprocess
 import click
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from backend.common import set_out_dir, CONTEXT_SETTINGS
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from modules.common import set_out_dir, CONTEXT_SETTINGS
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)

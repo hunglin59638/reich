@@ -8,8 +8,8 @@ from pathlib import Path
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from backend.common import set_threads, CONTEXT_SETTINGS, BaseNameType
-from backend.taxonparse import get_lineage
+from modules.common import set_threads, CONTEXT_SETTINGS, BaseNameType
+from modules.taxonparse import get_lineage
 
 
 def parse_paf(paf=None, line=None):
@@ -142,17 +142,6 @@ def call_hits(paf=None, taxdump_dir=None):
         sample_id = read_id.split(".")[0]
         sample2hits.setdefault(sample_id, [])
         sample2hits[sample_id].append(aln_rec)
-        # accession, taxid = aln_rec["tname"].split("|")
-        # taxids.add(taxid)
-        # sample2hits[sample_id].setdefault(read_id, {})
-        # sample2hits[sample_id][read_id]["alignment"] = aln_rec
-        # sample2hits[sample_id][read_id]["taxon"] = {"taxid": taxid}
-
-    # taxid2lineage = get_lineage(taxids=taxids, taxdump_dir=taxdump_dir)
-    # for sample_id, hits in sample2hits.items():
-    #     for read_id, read_dct in hits.items():
-    #         taxid = read_dct["taxon"]["taxid"]
-    #         read_dct["taxon"]["lineage"] = taxid2lineage[str(taxid)]
     return sample2hits
 
 
@@ -225,15 +214,6 @@ def main(queries, reference, out_dir, threads, read_type, paf=None):
         else paf
     )
     sample2hits = call_hits(paf=paf)
-    # best_aln_dct = select_best_alignment(paf=paf)
-    # reassign_dct = reassign_alignments(best_aln_dct)
-
-    # out_dct = {}
-    # for read_id, read_dct in reassign_dct.items():
-    #     sample_id = read_id.split(".")[0]
-    #     out_dct.setdefault(sample_id, {})
-    #     out_dct[sample_id][read_id] = read_dct
-
     hit_jsons = []
     for sample_id, hits in sample2hits.items():
         hit_json = out_dir / f"{sample_id}.hit.json"

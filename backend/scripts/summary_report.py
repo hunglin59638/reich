@@ -5,8 +5,8 @@ import click
 import pandas as pd
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from backend.common import set_out_dir, CONTEXT_SETTINGS
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from modules.common import set_out_dir, CONTEXT_SETTINGS
 
 
 @click.command(help="Relative abundance calculation", context_settings=CONTEXT_SETTINGS)

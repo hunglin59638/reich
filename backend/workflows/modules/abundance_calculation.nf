@@ -12,6 +12,6 @@ process abundance_calculation {
         path("rpm/*.rpm.json"), emit: rpm_json
     script:
         """
-        python $workflow.projectDir/../scripts/abundance_calculation.py --taxon_json ${taxon_json} --out_dir rpm
+        python $workflow.projectDir/scripts/abundance_calculation.py --taxon_json ${taxon_json} --out_dir rpm
         """
 }

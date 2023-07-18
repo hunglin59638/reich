@@ -8,8 +8,6 @@ dependencies:
   - ipykernel
   - nextflow
   - python>=3.6
-  - r-base
-  - r-tidyverse
   - fastp
   - bowtie2
   - minimap2
@@ -23,3 +21,4 @@ dependencies:
     - click
     - click-option-group
     - flask
+    - pyyaml

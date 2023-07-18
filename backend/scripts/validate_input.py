@@ -4,8 +4,9 @@ import json
 import click
 from pathlib import Path
 from time import sleep
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from backend.common import check_seq_format, set_out_dir, AdvancedJSONEncoder
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from modules.common import check_seq_format, set_out_dir, AdvancedJSONEncoder
 
 
 @click.command(help="Validate the input files")
@@ -18,7 +19,7 @@ from backend.common import check_seq_format, set_out_dir, AdvancedJSONEncoder
 @click.option("--out_dir", "-o", help="output directory")
 @set_out_dir
 def main(reads, out_dir):
-    valid_json = out_dir/"valid.json"
+    valid_json = out_dir / "valid.json"
     valid_dct = {"valid_json": valid_json}
     if check_seq_format(reads) != "fastq":
         click.echo(f"{reads} is not a fastq")

@@ -9,8 +9,8 @@ import tempfile
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from backend.common import set_threads, set_out_dir, open_gz
-from backend.taxonparse import list_subtree
+from modules.common import set_threads, set_out_dir, open_gz
+from modules.taxonparse import list_subtree
 
 
 def validate_md5(file, md5):

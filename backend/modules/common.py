@@ -4,15 +4,26 @@ import os
 import gzip
 import click
 import json
+import yaml
 from pathlib import Path
 from logging import getLogger, StreamHandler, FileHandler, DEBUG, WARN, INFO, Formatter
 
 
 logger = getLogger(__file__)
-APP_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 MAX_THREADS = os.cpu_count()
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
+
+def read_config():
+    config_yml = PROJECT_ROOT / "config.yml"
+    if config_yml.is_file():
+        with open(config_yml) as f:
+            config = yaml.safe_load(f)
+        return config
+    else:
+        return {}
 
 
 def set_threads(func):
@@ -45,7 +56,7 @@ def get_basename(path):
 
 
 def set_binaries_path():
-    bin_dir = os.path.join(APP_ROOT, "Reich/bin")
+    bin_dir = os.path.join(PROJECT_ROOT, "backend/scripts")
     logger.info(f"Adding {bin_dir} to PATH.")
     os.environ["PATH"] = bin_dir + ":" + os.environ["PATH"]
 
