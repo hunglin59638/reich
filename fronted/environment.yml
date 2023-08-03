@@ -13,3 +13,4 @@ dependencies:
   - r-jsonlite
   - jupyter
   - r-irkernel
+  - r-yaml
