@@ -11,7 +11,7 @@ process host_filter {
     
     script:
     """
-    python $workflow.projectDir/../scripts/host_filter.py \\
+    python $workflow.projectDir/scripts/host_filter.py \\
     --fastq_1 $reads \\
     --out_dir nonhuman \\
     --bowtie2_idx $params.bowtie2_idx \\
@@ -30,7 +30,7 @@ process subsample_reads {
         path("subsampled_reads/*.subsampled.fq"), emit: subsampled_reads
     script:
     """
-    python $workflow.projectDir/../scripts/subsample.py \\
+    python $workflow.projectDir/scripts/subsample.py \\
     --reads $reads \\
     --out_dir subsampled_reads
     """

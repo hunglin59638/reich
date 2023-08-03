@@ -10,6 +10,7 @@ dependencies:
   - python>=3.6
   - fastp
   - bowtie2
+  - hisat2
   - minimap2
   - seqtk
   - samtools
@@ -22,3 +23,5 @@ dependencies:
     - click-option-group
     - flask
     - pyyaml
+    - requests
+

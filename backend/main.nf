@@ -43,7 +43,7 @@ workflow {
 
     reads = channel.fromPath(params.reads, checkIfExists: true)
         .map {it}
-        .view { "reads: $it" }
+        // .view { "reads: $it" }
 
     validated_reads = validate_reads(reads)
     

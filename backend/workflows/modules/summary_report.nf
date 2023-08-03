@@ -11,6 +11,6 @@ process summary_report {
         path("report/*.report.tsv")
     script:
         """
-        python $workflow.projectDir/../scripts/summary_report.py --hit_json ${hit_json} --taxon_json ${taxon_json} --rpm_json ${rpm_json}  --out_dir report
+        python $workflow.projectDir/scripts/summary_report.py --hit_json ${hit_json} --taxon_json ${taxon_json} --rpm_json ${rpm_json}  --out_dir report
         """
 }

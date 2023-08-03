@@ -10,7 +10,7 @@ process pathogen_alignment {
         path('hit/*.hit.json'), emit: hit_json
     script:
     """
-    python $workflow.projectDir/../scripts/pathogen_alignment.py --out_dir hit --queries $reads --reference $params.nonhuman_db --threads $params.threads
+    python $workflow.projectDir/scripts/pathogen_alignment.py --out_dir hit --queries $reads --reference $params.nonhuman_db --threads $params.threads
     """
 }
 
@@ -25,6 +25,6 @@ process assign_taxon {
         path("taxon/*.taxonomy.json"), emit: taxon_json
     script:
     """
-    python $workflow.projectDir/../scripts/assign_taxon.py --hit_json $hit_json --out_dir taxon --taxdump_dir $params.taxdump_dir
+    python $workflow.projectDir/scripts/assign_taxon.py --hit_json $hit_json --out_dir taxon --taxdump_dir $params.taxdump_dir
     """
 }

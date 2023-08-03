@@ -10,7 +10,7 @@ process validate_reads {
         path(reads), emit: valid_reads
     script:
     """
-    python $workflow.projectDir/../scripts/validate_input.py \\
+    python $workflow.projectDir/scripts/validate_input.py \\
     --reads $reads \\
     --out_dir valid_reads 
     """
