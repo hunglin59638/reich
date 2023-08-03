@@ -182,8 +182,13 @@ def build_blastdb(taxdump_dir, db_type="nt", out_dir=None, resume=False):
         print("Done", tar_fpath)
         return (0, url)
 
-    human_fa = out_dir / "non_human_{db_type}.fa"
-    non_human_fa = out_dir / "human_{db_type}.fa"
+    human_fa = out_dir / f"non_human_{db_type}.fna"
+    non_human_fa = out_dir / f"human_{db_type}.fna"
+    if human_fa.is_file() and non_human_fa.is_file():
+        print("Human and non-human fasta files already exist")
+        return {
+            "fasta": {"human": human_fa, "non_human": non_human_fa},
+        }
 
     seq_type = "nucl" if db_type == "nt" else "prot"
     metadata_json_url = (
@@ -221,7 +226,7 @@ def build_blastdb(taxdump_dir, db_type="nt", out_dir=None, resume=False):
 
     return {
         "blastdb": db_basename,
-        "fasta": {"human": {human_fa}, "non_human": non_human_fa},
+        "fasta": {"human": human_fa, "non_human": non_human_fa},
     }
 
 
@@ -235,15 +240,27 @@ def build_human_db(human_fa, out_dir, threads=0):
     acc2taxid: path to acc2taxid marisa trie -> Path
 
     """
-    bowtie2_dir = out_dir / "bowtie2"
-    bowtie2_dir.mkdir(parents=True, exist_ok=True)
+    bowtie2_dir = out_dir / "bowtie"
+    bowtie_base_index = bowtie2_dir / "nt_human"
+    hisat2_url = "https://genome-idx.s3.amazonaws.com/hisat/grch38_tran.tar.gz"
+    hisat2_dir = out_dir / Path(hisat2_url).name.replace(".tar.gz", "_hisat")
+    hisat2_dir = out_dir / Path(hisat2_url).name.replace(".tar.gz", "_hisat")
 
-    bowtie_base_index = bowtie2_dir / "human"
+    bowtie2_dir.mkdir(parents=True, exist_ok=True)
+    if (
+        len([f for f in bowtie2_dir.glob("nt_human*")]) > 0
+        and len([f for f in hisat2_dir.glob("*.ht2")]) > 0
+    ):
+        print("Human bowtie2 and hisat2 indexes already exist")
+        return {
+            "bowtie2": bowtie_base_index,
+            "hisat2": hisat2_dir / "genome_tran",
+        }
+
     bowtie_index_p = subprocess.Popen(
         ["bowtie2-build", "--threads", threads, human_fa, bowtie_base_index]
     )
 
-    hisat2_url = "https://genome-idx.s3.amazonaws.com/hisat/grch38_tran.tar.gz"
     returncode, hisat2_tar = download_file(url=hisat2_url, out_dir=out_dir)
     if returncode:
         raise Exception("Failed to download hisat2 index")
@@ -301,26 +318,26 @@ def build_human_hisat2_index(out_dir, threads=0):
 
 @set_threads
 @set_out_dir
-def main(out_dir=None, threads=0):
+def build_db(out_dir=None, threads=0):
     taxdump_dir = out_dir / "taxdump"
     taxdump_dir.mkdir(parents=True, exist_ok=True)
     if len([f.is_file() for f in taxdump_dir.glob("*dmp")]) > 0:
         print("Taxdump already exists")
     else:
-        returncdoe, tardump_tar = download_file(
+        returncdoe, taxdump_dir = download_file(
             url="https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz",
             out_dir=out_dir,
         )
         if returncdoe:
             raise Exception("Failed to download taxdump")
-        with tarfile.open(tardump_tar, "r:gz") as tar:
+        with tarfile.open(taxdump_dir, "r:gz") as tar:
             tar.extractall(taxdump_dir)
-        tardump_tar.unlink()
+        taxdump_dir.unlink()
 
-    blastdbs = build_blastdb(out_dir=out_dir, db_type="nt")
+    blastdbs = build_blastdb(taxdump_dir=taxdump_dir, out_dir=out_dir, db_type="nt")
 
     human_dbs = build_human_db(
-        human_fa=blastdbs["fasta"]["human"], out_dir=out_dir, threads=0
+        human_fa=blastdbs["fasta"]["human"], out_dir=out_dir / "human", threads=0
     )
 
-    return [blastdbs, human_dbs]
+    return {"blastdb": blastdbs, "human_idx": human_dbs, "taxdump": taxdump_dir}
