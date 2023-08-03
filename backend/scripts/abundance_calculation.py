@@ -5,9 +5,9 @@ import json
 import click
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from backend.common import set_out_dir, CONTEXT_SETTINGS
-from backend.abundance import get_rpm
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from modules.common import set_out_dir, CONTEXT_SETTINGS
+from modules.abundance import get_rpm
 
 
 @click.command(help="Relative abundance calculation", context_settings=CONTEXT_SETTINGS)
