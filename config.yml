@@ -1,2 +1,12 @@
 version: '1.0.0'
 api_port: 5002
+
+fronted:
+  port: 59638
+  users:
+    admin:
+      hash_passwd: 8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+      role: admin
+    guest:
+      hash_passwd: 84983c60f7daadc1cb8698621f802c0d9f9a3c3c295c810748fb048115c186ec
+      role: guest
