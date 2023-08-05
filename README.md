@@ -1,4 +1,4 @@
-# Reich &middot; [![GitHub license](https://img.shields.io/badge/license-GPL3-brightgreen.svg)](https://github.com/chanzuckerberg/czid-web/blob/master/LICENSE) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)  
+# Reich &middot; ![GitHub license](https://img.shields.io/badge/license-GPL3-brightgreen.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)  
 
 <img width="150" height="60" src="pics/cover.png">  
 
@@ -15,7 +15,7 @@ Currently, only the backend module is available, and the frontend module is stil
 For local installation, follow these steps:
 
 ```bash
-git clone https://github.com/hunglin59638/reich.git``
+git clone https://github.com/hunglin59638/reich.git
 cd reich
 ```
 
@@ -36,11 +36,11 @@ First, you need to build the database for pathogen detection. Using the followin
 backend/script/build_db.py --out_dir /path/to/reich_db
 ```
 It will download NT blastdb and convert to fasta. Then, use human nt fasta to build bowtie2 index.   
-The fasta excluded human nt will be used to non-human pathogen detection.
+The fasta excluded human nt will be used to non-human pathogen detection.  
 Hisat2 index for human removal will be download from [hisat2](https://daehwankimlab.github.io/hisat2/download/).
 
 It will take about 4-6 hours to download and build the database.  
-The database size is about 180G. Please make sure you have enough disk space.
+The database size is about 180 GB. Please make sure you have enough disk space.
 
 Expected output:
 ```
@@ -57,10 +57,10 @@ Expected output:
 Then, you can run the pipeline by using the following command:
 
 ```bash
-nextflow run backend/main.nf --reads '/path/to/reads/*.fastq.gz' --db_dir /path/to/reich_db --out_dir /path/to/output --threads 12
+nextflow run backend/main.nf --reads '/path/to/reads/*.fastq.gz' --db_dir /path/to/reich_db --out_dir /path/to/output --threads 12 -profile local
 ```
 
-The memory usage is about 70-80G. Please make sure you have enough memory.
+The memory usage is about 70-80 GB. Please make sure you have enough memory.
 
 
 
@@ -69,16 +69,22 @@ The memory usage is about 70-80G. Please make sure you have enough memory.
 Expected output:
 ```
 /path/to/output
+└── valid_reads/${sample_name}.valid.json
+├── nonhuman/${sample_name}.qc.nonhuman.fq
+├── subsampled_reads/${sample_name}.subsampled.fq
+├── hit/${sample_name}.hit.json
+├── taxon/${sample_name}.taxonomy.json
+├── rpm/${sample_name}.rpm.json
 ├── report/${sample_name}.report.tsv
 ```
 
-The output is a tsv file, which contains the following columns:  
+The report is a tsv file, which contains the following columns:  
 
 | Column | Description |
 | --- | --- |
 |Taxon|Taxon name|
-|Score|Aggregate Score|
-|Z score| Z score|
+|Score|Aggregate Score (not used)|
+|Z score| Z score (not used)|
 |rPM| Reads per million|
 |r|reads mapped to the taxon|
 |%id| average identity|
