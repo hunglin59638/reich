@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow 
 
 process abundance_calculation {
-    publishDir "${params.out_dir}/rpm", mode: 'copy', pattern: '*.rpm.json'
+    publishDir "${params.out_dir}", mode: 'copy', pattern: 'rpm/*.rpm.json'
 
     input:
         path(hit_json)

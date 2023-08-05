@@ -46,7 +46,6 @@ workflow {
         // .view { "reads: $it" }
 
     validated_reads = validate_reads(reads)
-    
     nonhuman_ch = host_filter(validated_reads.valid_reads)
     subsampled_ch = subsample_reads(nonhuman_ch.nonhuman_reads)
 

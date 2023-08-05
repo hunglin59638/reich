@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow 
 
 process pathogen_alignment {
-    publishDir "${params.out_dir}/hit", mode: 'copy', pattern: '*.hit.json'
+    publishDir "${params.out_dir}", mode: 'copy', pattern: 'hit/*.hit.json'
 
     label "performance"
     input:
@@ -15,7 +15,7 @@ process pathogen_alignment {
 }
 
 process assign_taxon {
-    publishDir "${params.out_dir}/taxon", mode: 'copy', pattern: '*.taxonomy.json'
+    publishDir "${params.out_dir}", mode: 'copy', pattern: 'taxon/*.taxonomy.json'
 
     label "normal"
     input:

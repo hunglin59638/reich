@@ -19,7 +19,8 @@ from modules.common import check_seq_format, set_out_dir, AdvancedJSONEncoder
 @click.option("--out_dir", "-o", help="output directory")
 @set_out_dir
 def main(reads, out_dir):
-    valid_json = out_dir / "valid.json"
+    sample_id = reads.name.split(".")[0]
+    valid_json = Path(out_dir) / f"{sample_id}.valid.json"
     valid_dct = {"valid_json": valid_json}
     if check_seq_format(reads) != "fastq":
         click.echo(f"{reads} is not a fastq")
@@ -27,7 +28,7 @@ def main(reads, out_dir):
     valid_dct.update({"valid_fastq": reads})
     valid_json.write_text(json.dumps(valid_dct, indent=4, cls=AdvancedJSONEncoder))
     click.echo("OK")
-    sleep(3)
+    sleep(1)
 
 
 if __name__ == "__main__":

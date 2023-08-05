@@ -182,8 +182,8 @@ def build_blastdb(taxdump_dir, db_type="nt", out_dir=None, resume=False):
         print("Done", tar_fpath)
         return (0, url)
 
-    human_fa = out_dir / f"non_human_{db_type}.fna"
-    non_human_fa = out_dir / f"human_{db_type}.fna"
+    human_fa = out_dir / f"human_{db_type}.fna"
+    non_human_fa = out_dir / f"non_human_{db_type}.fna"
     if human_fa.is_file() and non_human_fa.is_file():
         print("Human and non-human fasta files already exist")
         return {

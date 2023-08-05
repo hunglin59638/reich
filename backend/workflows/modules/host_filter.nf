@@ -3,7 +3,7 @@
 process host_filter {
     label "performance"
     cpus = 3
-    publishDir "${params.out_dir}/nonhuman", mode: 'copy', pattern: '*.nonhuman.fq'
+    publishDir "${params.out_dir}", mode: 'copy', pattern: 'nonhuman/*.nonhuman.fq'
     input:
         path(reads)    
     output:
@@ -23,7 +23,7 @@ process host_filter {
 
 process subsample_reads {
     label "normal"
-    publishDir "${params.out_dir}/subsampled_reads", mode: 'copy', pattern: '*.subsampled.fq'
+    publishDir "${params.out_dir}", mode: 'copy', pattern: 'subsampled_reads/*.subsampled.fq'
     input:
         path(reads)
     output:

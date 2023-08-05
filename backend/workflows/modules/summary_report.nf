@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow 
 
 process summary_report {
-    publishDir "${params.out_dir}/report", mode: 'copy', pattern: '*.report.tsv'
+    publishDir "${params.out_dir}", mode: 'copy', pattern: 'report/*.report.tsv'
     label "normal"
     input:
         path(hit_json)
